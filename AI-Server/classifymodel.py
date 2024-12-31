@@ -4,11 +4,10 @@ import json
 from transformers import pipeline, BertTokenizer
 
 app = Flask(__name__)
-CORS(app)  # Thêm CORS cho toàn bộ app
+CORS(app) 
 
-# Khởi tạo pipeline phân loại văn bản
 pipe = pipeline("text-classification", model="Nhieu123/final_model_continued")
-tokenizer = BertTokenizer.from_pretrained("Nhieu123/final_model_continued")  # Khởi tạo tokenizer BERT
+tokenizer = BertTokenizer.from_pretrained("Nhieu123/final_model_continued")  # Token hóa
 
 # Hàm chia văn bản thành các chunk
 def chunk_text(text):
@@ -22,7 +21,7 @@ def chunk_text(text):
         # Kiểm tra chiều dài của chunk sau khi tokenization
         encoded_chunk = tokenizer.encode(" ".join(current_chunk), add_special_tokens=True)
         if len(encoded_chunk) > 512:
-            # Nếu chunk vượt quá kích thước tối đa, lưu chunk hiện tại và bắt đầu chunk mới
+            #nếu chunk vượt quá kích thước tối đa, lưu chunk hiện tại và bắt đầu chunk mới
             current_chunk.pop()  # Xóa từ cuối cùng để không vượt quá 512 token
             chunks.append(" ".join(current_chunk))  # Lưu chunk hiện tại
             current_chunk = [word]  # Bắt đầu chunk mới với từ hiện tại
@@ -36,20 +35,18 @@ def chunk_text(text):
 @app.route('/classify', methods=['POST'])
 def predict():
     try:
-        # Xử lý dữ liệu JSON đầu vào
         data = json.loads(request.data.decode("utf-8"))
         text = data.get("email_text", "")
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON format"}), 400
 
-    # Kiểm tra input
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    # Thực hiện chunking
+    # chunking
     chunks = chunk_text(text)
 
-    # Biến lưu trữ số lượng chunk "phishing", "safe" và điểm số
+    # Biến lưu trữ số lượng chunk "phishing", "safe" và điểm
     phishing_count = 0
     safe_count = 0
     phishing_scores = []
@@ -77,16 +74,14 @@ def predict():
         avg_safe_score = sum(safe_scores) / len(safe_scores)
         return jsonify([{"label": "safe", "score": avg_safe_score}])
     else:
-        # Nếu số lượng chunk "phishing" và "safe" bằng nhau, có thể trả về trung bình điểm của cả hai
+        # Nếu số lượng chunk "phishing" và "safe" bằng nhau, trả về trung bình điểm của cả hai
         avg_phishing_score = sum(phishing_scores) / len(phishing_scores) if phishing_scores else 0
         avg_safe_score = sum(safe_scores) / len(safe_scores) if safe_scores else 0
 
-        # Quyết định kết quả cuối cùng dựa trên điểm
+        # Quyết định kết quả cuối cùng
         if avg_phishing_score > avg_safe_score:
             return jsonify([{"label": "phishing", "score": avg_phishing_score}])
         else:
             return jsonify([{"label": "safe", "score": avg_safe_score}])
-
-# Chạy server lắng nghe từ mọi IP
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
