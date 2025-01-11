@@ -1,5 +1,5 @@
 # MailShield-Project
-This is MailShield Server Source Code, developed by CyberSafe Team.
+This is MailShield Server Source Code at Server Site, developed by CyberSafe Team. (Source Code at Client Site is protected for security reasons.)
 
 Source Code include two Folder: AI-Server for AI model source code, Url-Analysis-Server for URL Analysis Virtual Server
 
